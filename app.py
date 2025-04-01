@@ -1,10 +1,10 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import numpy as np
 from fitparse import FitFile
 import os
-import matplotlib.pyplot as plt
 
 st.set_page_config(page_title="FIT File Analyzer", page_icon="❤️", layout="wide")
 
@@ -114,23 +114,36 @@ def main():
         for i, (metric_name, metric_value) in enumerate(metrics.items()):
             cols[i].metric(metric_name, f"{metric_value} bpm")
         
-        # Heart Rate Distribution
+        # Heart Rate Distribution with Plotly
         st.header("Heart Rate Distribution")
-        hist_fig, ax = plt.subplots(figsize=(10, 5))
-        ax.hist(data['heart_rate'], bins=20, color='#FF4B4B', alpha=0.7)
-        ax.set_xlabel('Heart Rate (bpm)')
-        ax.set_ylabel('Frequency')
-        ax.set_title('Heart Rate Distribution')
-        ax.grid(True, alpha=0.3)
         
-        # Add lines for key statistics
-        ax.axvline(metrics['Average HR'], color='red', linestyle='-', label=f"Avg: {metrics['Average HR']} bpm")
-        ax.axvline(metrics['Q1 (25%)'], color='green', linestyle='--', label=f"Q1: {metrics['Q1 (25%)']} bpm")
-        ax.axvline(metrics['Median HR'], color='blue', linestyle='--', label=f"Median: {metrics['Median HR']} bpm")
-        ax.axvline(metrics['Q3 (75%)'], color='purple', linestyle='--', label=f"Q3: {metrics['Q3 (75%)']} bpm")
+        # Create histogram with Plotly
+        hist_fig = px.histogram(
+            data, 
+            x='heart_rate',
+            nbins=20,
+            title='Heart Rate Distribution',
+            labels={'heart_rate': 'Heart Rate (bpm)', 'count': 'Frequency'},
+            template="plotly_white"
+        )
         
-        ax.legend()
-        st.pyplot(hist_fig)
+        # Add vertical lines for key metrics
+        hist_fig.add_vline(x=metrics['Average HR'], line_dash="solid", line_color="red", 
+                          annotation_text=f"Avg: {metrics['Average HR']} bpm", 
+                          annotation_position="top right")
+        hist_fig.add_vline(x=metrics['Q1 (25%)'], line_dash="dash", line_color="green", 
+                          annotation_text=f"Q1: {metrics['Q1 (25%)']} bpm", 
+                          annotation_position="top right")
+        hist_fig.add_vline(x=metrics['Median HR'], line_dash="dash", line_color="blue", 
+                          annotation_text=f"Median: {metrics['Median HR']} bpm", 
+                          annotation_position="top right")
+        hist_fig.add_vline(x=metrics['Q3 (75%)'], line_dash="dash", line_color="purple", 
+                          annotation_text=f"Q3: {metrics['Q3 (75%)']} bpm", 
+                          annotation_position="top right")
+        
+        hist_fig.update_layout(height=500)
+        
+        st.plotly_chart(hist_fig, use_container_width=True)
         
         # Display raw data if requested
         if st.checkbox("Show raw data"):
